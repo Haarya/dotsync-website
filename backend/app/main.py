@@ -1,17 +1,19 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from .device.base import DeviceClient, DeviceStatus, PracticeResult
-from .device.mock import MockDeviceClient
-from .schemas import HealthResponse, PracticeRequest
+from .device.base import DeviceStatus, PracticeAction
+from .device.mock import DeviceBusyError, MockDeviceClient
+from .lessons import WordSessionStore, WordSessionView
+from .schemas import HealthResponse, PracticeRequest, WordAnswerRequest, WordSessionRequest
 
 app = FastAPI(
     title="DotSync Local API",
     version="0.1.0",
     description="Local Phase 1 API. Device operations currently use a safe simulator.",
 )
-device: DeviceClient = MockDeviceClient()
+device = MockDeviceClient()
+word_sessions = WordSessionStore()
 
 
 @app.exception_handler(RequestValidationError)
@@ -19,8 +21,11 @@ async def validation_error_handler(
     _request: Request, error: RequestValidationError
 ) -> JSONResponse:
     text_field_error = any(
-        validation_error.get("loc")
-        and validation_error["loc"][-1] == "text"
+        validation_error.get("loc", ())[-1:] == ("text",)
+        for validation_error in error.errors()
+    )
+    word_field_error = any(
+        validation_error.get("loc", ())[-1:] == ("word",)
         for validation_error in error.errors()
     )
     if text_field_error:
@@ -28,7 +33,15 @@ async def validation_error_handler(
             status_code=422,
             content={
                 "code": "UNSUPPORTED_INPUT",
-                "message": "Use 1-40 English letters A-Z and spaces only.",
+                "message": "Use 1–40 English letters A-Z and spaces only.",
+            },
+        )
+    if word_field_error:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "code": "UNSUPPORTED_INPUT",
+                "message": "Choose a word with 2-8 English letters A-Z and no spaces.",
             },
         )
     return JSONResponse(
@@ -47,6 +60,75 @@ async def device_status() -> DeviceStatus:
     return await device.get_status()
 
 
-@app.post("/api/v1/practice", response_model=PracticeResult)
-async def practice(request: PracticeRequest) -> PracticeResult:
-    return await device.practice_text(request.text)
+@app.post(
+    "/api/v1/practice",
+    response_model=PracticeAction,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def practice(request: PracticeRequest) -> PracticeAction:
+    try:
+        return await device.start_practice(request.text)
+    except DeviceBusyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": "DEVICE_BUSY", "message": str(error)},
+        ) from error
+
+
+@app.get("/api/v1/actions/{action_id}", response_model=PracticeAction)
+async def action_status(action_id: str) -> PracticeAction:
+    action = await device.get_action(action_id)
+    if action is None:
+        raise HTTPException(status_code=404, detail="Practice activity not found.")
+    return action
+
+
+@app.post("/api/v1/actions/{action_id}/cancel", response_model=PracticeAction)
+async def cancel_action(action_id: str) -> PracticeAction:
+    action = await device.cancel_action(action_id)
+    if action is None:
+        raise HTTPException(status_code=404, detail="Practice activity not found.")
+    return action
+
+
+@app.post("/api/v1/device/reset", response_model=DeviceStatus)
+async def reset_device() -> DeviceStatus:
+    await device.reset()
+    return await device.get_status()
+
+
+@app.post("/api/v1/sessions", response_model=WordSessionView, status_code=status.HTTP_201_CREATED)
+async def create_word_session(request: WordSessionRequest) -> WordSessionView:
+    return word_sessions.create(request.word)
+
+
+@app.get("/api/v1/sessions/{session_id}", response_model=WordSessionView)
+async def get_word_session(session_id: str) -> WordSessionView:
+    session = word_sessions.get(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail={"code": "SESSION_NOT_FOUND", "message": "Word journey not found."})
+    return session
+
+
+@app.post("/api/v1/sessions/{session_id}/advance", response_model=WordSessionView)
+async def advance_word_session(session_id: str) -> WordSessionView:
+    session = word_sessions.advance(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail={"code": "SESSION_NOT_FOUND", "message": "Word journey not found."})
+    return session
+
+
+@app.post("/api/v1/sessions/{session_id}/evaluate", response_model=WordSessionView)
+async def evaluate_word_session(session_id: str, request: WordAnswerRequest) -> WordSessionView:
+    session = word_sessions.evaluate(session_id, request.answer)
+    if session is None:
+        raise HTTPException(status_code=404, detail={"code": "SESSION_NOT_FOUND", "message": "Word journey not found."})
+    return session
+
+
+@app.post("/api/v1/sessions/{session_id}/cancel", response_model=WordSessionView)
+async def cancel_word_session(session_id: str) -> WordSessionView:
+    session = word_sessions.cancel(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail={"code": "SESSION_NOT_FOUND", "message": "Word journey not found."})
+    return session

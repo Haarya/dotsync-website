@@ -14,7 +14,8 @@
 | Layer | MVP choice | Reason |
 |---|---|---|
 | Frontend | React + TypeScript + Vite | Familiar component model and accessible web UI; static assets can be served by the backend. |
-| Styling | CSS modules or plain CSS with design tokens | Keeps the first interface small and avoids unnecessary UI dependencies. |
+| Styling | Plain CSS with design tokens | Keeps the interface lightweight while supporting a high-contrast dark theme and responsive layouts. |
+| Decorative 3D | Three.js for the Braille particle artwork only | Adds a responsive, low-cost dot field with a WebGL fallback; it must not carry instructions or status information. |
 | Backend | Python 3 + FastAPI + Pydantic | Simple local HTTP service, typed request/response validation, and easy integration with Python speech tools. |
 | Persistence | None for MVP; SQLite in later progress phase | Avoid retaining learner information before a real need and consent policy exist. |
 | Device integration | Python HTTP client behind a `DeviceClient` adapter | Contains ESP32-specific paths, timeouts, and error handling in one module. |
@@ -50,6 +51,13 @@ docs/                  # product, flow, stack, and implementation guides
 - Firmware has no TLS/authentication/CORS configuration. The backend should proxy device calls and stay on a trusted LAN.
 - The site must not assume simultaneous full-word Braille display, touch sensing, or spoken word-level output from the ESP32.
 
-## 6. Upgrade path
+## 6. Visual and motion constraints
+
+- Use the selected sunset accents (`#EA6113`, `#F88F22`, `#FBB931`, `#FFE3B3`) against a dark brown-black base.
+- Keep Three.js decorative and limited to the homepage particle/Braille artwork. The text, navigation, lessons, and device state remain ordinary semantic HTML.
+- Provide a non-WebGL fallback, cap device pixel ratio on mobile, stop rendering off-screen, and respect `prefers-reduced-motion`.
+- Do not use motion to convey a learning instruction or device state. Keep pointer response subtle and avoid continuous movement when reduced motion is requested.
+
+## 7. Upgrade path
 
 Add SQLite only when progress persistence is approved. Add authenticated local users/device pairing before multiple classrooms. Add a secure gateway and device credentials before remote access. Keep all speech recognition implementations behind the same interface so accuracy, latency, and privacy can be compared without changing lesson logic.

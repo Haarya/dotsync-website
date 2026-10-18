@@ -2,6 +2,8 @@
 
 **Status:** Draft for implementation planning
 
+**Current simulator build:** The site now supports mock letter/text progression, a word session with a server-held answer key and typed simulated answer check, and a session-only guided A-Z lesson. Simulator flows do not send commands to the ESP32 or record microphone audio. Hardware and microphone integration remain deferred until the website flows are complete.
+
 ## 1. Main navigation
 
 ```mermaid

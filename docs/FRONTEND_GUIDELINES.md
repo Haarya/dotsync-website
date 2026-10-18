@@ -44,5 +44,13 @@ For each failure, provide one next step. Example: “The board is taking longer 
 
 - Build reusable components for `DeviceStatus`, `TextEntry`, `ActivityControls`, `ProgressAnnouncement`, `RecordingState`, and `FeedbackMessage`.
 - Use shared spacing, typography, focus, contrast, and motion tokens. Respect reduced-motion preferences.
+- Keep Braille symbols accompanied by their letter/dot description for screen readers. Decorative Three.js artwork must be hidden or described accessibly and must never be the only way to receive information.
+- Keep animated dots decorative: provide a WebGL fallback, pause off-screen, cap mobile rendering resolution, and stop motion when the user requests reduced motion.
 - Keep controls large and predictable; avoid gestures or drag-only actions.
 - Do not depend on color alone for correctness, connectivity, or recording state.
+
+## 7. Simulator behavior
+
+- Mark all mock device and typed-answer behavior as simulated; never imply that the ESP32 moved or a microphone recording was checked.
+- Keep the word answer key on the backend and clear the adult's setup field after a session starts.
+- Keep guided-lesson progress in the current page session only. The revisit rule is deterministic and does not make claims about learner ability.

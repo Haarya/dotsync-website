@@ -65,9 +65,10 @@ Base path: `/api/v1`. JSON over same-origin HTTP in local MVP; deploy behind HTT
 
 - `GET /health` → `{ "ok": true }`
 - `GET /device/status` → `{ "connected": true, "busy": false, "micRecordingReady": false, "apiVersion": 1 }`
-- `POST /practice` body `{ "text": "CAT" }` → `202 { "actionId": "...", "state": "queued" }`
-- `POST /device/reset` → `202 { "actionId": "...", "state": "queued" }`
-- `GET /actions/{actionId}` → `{ "state": "queued|running|completed|failed", "message": "..." }`
+- `POST /practice` body `{ "text": "CAT" }` → `202 { "action_id": "...", "state": "queued", "character_count": 3, "current_index": 0 }`
+- `POST /device/reset` → clears active simulated practice and returns device status (real reset adapter is a later phase)
+- `GET /actions/{action_id}` → current action state and progress
+- `POST /actions/{action_id}/cancel` → cancel an active practice action
 
 ### Quiz session
 
@@ -78,7 +79,7 @@ Base path: `/api/v1`. JSON over same-origin HTTP in local MVP; deploy behind HTT
 - `POST /sessions/{sessionId}/evaluate` → `{ "outcome": "correct|retry|uncertain", "confidence": 0.91, "feedback": "That’s right. Ready for the next word?" }`
 - `POST /sessions/{sessionId}/cancel` → `{ "state": "cancelled" }`
 
-The exact shape may change during implementation. The invariant is that `expected_answer` stays server-side until an explicit teacher reveal.
+The exact shape may change during implementation. The invariant is that `expected_answer` stays server-side until an explicit teacher reveal. The current implementation has health, status, practice, action polling/cancel, simulator reset, and in-memory word-session endpoints. In mock mode, answer checking accepts a typed transcript for exercising the session flow; it is not microphone recording or speech recognition.
 
 ## 4. ESP32 adapter contract
 

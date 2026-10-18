@@ -1,6 +1,6 @@
 # DotSync Website Implementation Plan
 
-**Status:** Proposed build sequence  
+**Status:** In progress  
 **Version:** 1.0  
 **Date:** 2026-10-18
 
@@ -52,6 +52,21 @@ ESP32 firmware → one six-dot cell, speaker, microphone
 
 ## 4. Phases and exit gates
 
+**User-directed sequencing:** Complete the website and exercise its learner flows against the mock device first. Defer the assembled-board bench checks and ESP32 adapter until the website workflows are ready. During this website-first stage, hardware-specific interactions must remain clearly labeled as simulated; this sequencing does not count mock behavior as hardware validation.
+
+### Current implementation status
+
+| Plan area | Status | Current result |
+|---|---|---|
+| Phase 0: hardware validation | Deferred | Run after the website-first build, before any learner session on the physical board. |
+| Phase 1: local foundation | In place | React + TypeScript, FastAPI, local health/status, mock device, and documented local setup. |
+| Phase 3: letter/text practice | Mock workflow implemented | Validated A-Z input, simulated letter-by-letter progress, Braille cell preview, stop, and reset. |
+| Phase 4: word session | Mock workflow implemented | In-memory session, one pattern at a time, hidden expected word, cancel, and answer outcomes. |
+| Phase 5: speech recognition | Partial mock only | Typed answers exercise correct/retry/uncertain states; microphone capture and speech recognition remain outstanding. |
+| Phase 6: self-guided lessons | First lesson implemented | Guided A-Z sequence, optional browser speech, session-only progress, and a bounded revisit rule. |
+| Phases 7-8 | Not implemented | Optional AI decisions, accessibility evaluation, and deployment work remain. |
+| Phase 2: ESP32 adapter | Deferred | The browser still talks only to the local backend; the real device client is not implemented. |
+
 Each phase ends with a reviewable result and its exit checks. A phase that fails a hardware or privacy gate does not move into child use; development can continue against a simulator where appropriate.
 
 ### Phase 0 — Confirm scope and validate the assembled prototype
@@ -84,6 +99,7 @@ The integrated sketch compiles and the assembled prototype passes the bench chec
 4. Add a `DeviceClient` interface and a deterministic mock implementation. The website must be usable for UI work without the physical ESP32.
 5. Add a configuration boundary for the device URL and speech mode. Keep Wi-Fi credentials and service secrets out of source control and browser assets.
 6. Establish formatting, linting, and type-check commands in project documentation. Add automated tests in the relevant later implementation work and run them when implementation verification is requested.
+7. Use Three.js only for the decorative homepage Braille particle field. Keep its fallback, reduced-motion behavior, mobile pixel-ratio cap, and off-screen pause; all learning instructions and status remain accessible HTML.
 
 **Deliverables**
 
@@ -266,6 +282,6 @@ Keep hardware endpoint details in `backend/app/device/`; keep answer keys and sc
 
 ## 7. First implementation milestone
 
-Start with **Phase 0** on the assembled device and **Phase 1** in mock mode. They can proceed in parallel: hardware validation establishes the true firmware behavior while the app shell and contracts are built without blocking on hardware. Then integrate the adapter in Phase 2, deliver letter practice in Phase 3, and proceed to word quizzes only after the advance control and three-second recording suitability are settled.
+Start with **Phase 1** and implement the learner workflows in mock mode first. Complete letter practice, the word-session interface, speech/answer checking boundaries, and self-guided lessons against simulated device and recognition adapters. Clearly label every simulated behavior. After the website flows are reviewable, proceed to **Phase 0** hardware validation, then implement **Phase 2** and replace the mock device adapter with the ESP32 client. Revisit microphone capture and recording duration against the assembled board before learner trials.
 
 The key product decision to record before Phase 4 is the MVP advance control. The recommendation is teacher-controlled **Next letter** for the first supervised release. Independent learner progression would require a button/control mapped in firmware or a touch sensor; the current optional GPIO4 button is used to start recording.

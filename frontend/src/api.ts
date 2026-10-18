@@ -11,10 +11,23 @@ export type DeviceStatus = {
 };
 
 export type PracticeResponse = {
-  actionId: string;
-  state: "simulated";
-  characterCount: number;
+  action_id: string;
+  state: "queued" | "running" | "completed" | "cancelled" | "failed";
+  text: string;
+  character_count: number;
+  current_index: number;
+  current_character: string | null;
   message: string;
+};
+
+export type WordSession = {
+  session_id: string;
+  state: "waiting_for_answer" | "feedback" | "completed" | "cancelled";
+  item_index: number;
+  item_count: number;
+  current_dots: number[];
+  outcome: "correct" | "retry" | "uncertain" | null;
+  feedback: string;
 };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -28,9 +41,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const payload = (await response.json().catch(() => null)) as
-      | { message?: string; detail?: string }
+      | { message?: string; detail?: string | { message?: string } }
       | null;
-    throw new Error(payload?.message ?? payload?.detail ?? "The local service could not complete that request.");
+    const detail = typeof payload?.detail === "string" ? payload.detail : payload?.detail?.message;
+    throw new Error(payload?.message ?? detail ?? "The local service could not complete that request.");
   }
 
   return (await response.json()) as T;
@@ -44,4 +58,18 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ text }),
     }),
+  action: (actionId: string) => request<PracticeResponse>(`/api/v1/actions/${actionId}`),
+  cancelAction: (actionId: string) =>
+    request<PracticeResponse>(`/api/v1/actions/${actionId}/cancel`, { method: "POST" }),
+  resetDevice: () => request<DeviceStatus>("/api/v1/device/reset", { method: "POST" }),
+  createWordSession: (word: string) => request<WordSession>("/api/v1/sessions", {
+    method: "POST",
+    body: JSON.stringify({ word }),
+  }),
+  advanceWordSession: (sessionId: string) => request<WordSession>(`/api/v1/sessions/${sessionId}/advance`, { method: "POST" }),
+  evaluateWordSession: (sessionId: string, answer: string) => request<WordSession>(`/api/v1/sessions/${sessionId}/evaluate`, {
+    method: "POST",
+    body: JSON.stringify({ answer }),
+  }),
+  cancelWordSession: (sessionId: string) => request<WordSession>(`/api/v1/sessions/${sessionId}/cancel`, { method: "POST" }),
 };
