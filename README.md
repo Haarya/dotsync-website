@@ -11,6 +11,7 @@ These documents define the first version of the DotSync website and its connecti
 5. [Frontend guidelines](docs/FRONTEND_GUIDELINES.md)
 6. [Backend schema](docs/BACKEND_SCHEMA.md)
 7. [Implementation roadmap](docs/ROADMAP.md)
+8. [Phase-by-phase implementation plan](docs/IMPLEMENTATION_PLAN.md)
 
 ## Current hardware/software boundary
 
