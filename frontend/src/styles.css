@@ -368,3 +368,19 @@ html.ds-reduce-motion *, html.ds-reduce-motion *::before, html.ds-reduce-motion 
 .word-stepper { margin-top: 20px; padding: 16px; border: 1px solid var(--line-light); background: var(--night); }
 .word-stepper p { color: var(--muted); line-height: 1.6; }
 .word-stepper strong { color: var(--paper); }
+
+html.ds-high-contrast body { color: #fff; background: #000; }
+html.ds-high-contrast .hero,
+html.ds-high-contrast .braille-banner,
+html.ds-high-contrast .home-paths,
+html.ds-high-contrast .path-card,
+html.ds-high-contrast .small-promise,
+html.ds-high-contrast .site-header,
+html.ds-high-contrast .site-footer { background-color: #000 !important; background-image: none !important; border-color: #fff; }
+html.ds-high-contrast .path-card,
+html.ds-high-contrast .studio-card,
+html.ds-high-contrast .studio-feedback,
+html.ds-high-contrast .device-message { background: #000; border-color: #fff; color: #fff; }
+html.ds-high-contrast .button-primary { color: #000; background: #ffeb00; border-color: #ffeb00; }
+html.ds-high-contrast a, html.ds-high-contrast .text-link { color: #fff; }
+html.ds-high-contrast :focus-visible { outline-color: #ffeb00; }
