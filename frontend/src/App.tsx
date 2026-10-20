@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { api, DeviceStatus, HealthResponse, PracticeResponse, WordSession } from "./api";
 import BrailleParticleScene from "./BrailleParticleScene";
 
@@ -33,6 +33,8 @@ function pageFromHash(): Page {
 
 function App() {
   const [page, setPage] = useState<Page>(() => pageFromHash());
+  const mainRef = useRef<HTMLElement>(null);
+  const firstRender = useRef(true);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [device, setDevice] = useState<DeviceStatus | null>(null);
   const [connectionMessage, setConnectionMessage] = useState("Checking the local service…");
@@ -67,6 +69,18 @@ function App() {
       window.clearInterval(timer);
     };
   }, [refreshConnection]);
+
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    const heading = mainRef.current?.querySelector<HTMLElement>("h1");
+    if (heading) {
+      if (!heading.hasAttribute("tabindex")) heading.setAttribute("tabindex", "-1");
+      heading.focus({ preventScroll: true });
+    }
+  }, [page]);
 
   useEffect(() => {
     if (!result || !["queued", "running"].includes(result.state)) return;
@@ -150,7 +164,7 @@ function App() {
         </div>
       </header>
 
-      <main id="main-content" tabIndex={-1}>
+      <main id="main-content" ref={mainRef} tabIndex={-1}>
         {page === "home" && <HomePage serviceReady={serviceReady} message={connectionMessage} />}
         {page === "learn" && <LearnPage onChooseLetter={chooseLetter} />}
         {page === "guided" && <GuidedLessonPage />}
@@ -257,7 +271,7 @@ function LearnPage({ onChooseLetter }: { onChooseLetter: (letter: string) => voi
         <div><h1 id="learn-title">Meet the letters.</h1><p className="page-lede">Every cell has six positions. Choose a letter to send it to the practice page.</p></div>
         <span className="page-number">A—Z<br />26 CELLS</span>
       </div>
-      <div className="alphabet-grid" aria-label="English Braille alphabet">
+      <div className="alphabet-grid" role="group" aria-label="English Braille alphabet">
         {alphabet.map(([letter, braille, dots]) => (
           <button className="letter-card" type="button" key={letter} onClick={() => onChooseLetter(letter)} aria-label={`Practice letter ${letter}. Its Braille dots are ${dots.replaceAll(" · ", ", ")}`}>
             <span className="letter-card-top"><span>{letter}</span><span className="letter-dots">{dots.replaceAll(" · ", "·")}</span></span>
@@ -318,7 +332,7 @@ function GuidedLessonPage() {
         <span className="page-number">A—Z<br />NO TIMER</span>
       </div>
       {finished ? (
-        <div className="guided-complete" role="status">
+        <div className="guided-complete">
           <p className="eyebrow">LESSON COMPLETE</p>
           <h2>You explored the alphabet.</h2>
           <p>You marked {mastered.length} of 26 letters as familiar. You can revisit any letter in the A–Z atlas.</p>
@@ -328,6 +342,7 @@ function GuidedLessonPage() {
       ) : entry && letter ? (
         <div className="guided-lesson">
           <div className="guided-progress-head"><span>LETTER {letter}</span><span>{Math.min(index + 1, sequence.length)} OF {sequence.length}</span></div>
+          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">Letter {letter}. {Math.min(index + 1, sequence.length)} of {sequence.length} in this lesson. Raised dots: {dots.join(", ")}.</p>
           <progress value={index} max={sequence.length} aria-label={`Lesson progress, letter ${letter}`} />
           <div className="guided-card">
             <div className="guided-letter" role="img" aria-label={`Letter ${letter}, Braille dots ${dots.join(", ")}`}>
@@ -408,14 +423,14 @@ function PracticePage(props: PracticePageProps) {
             {result?.state === "completed" && <button className="quiet-button activity-control" type="button" onClick={onReset}>Reset simulation</button>}
             {(!serviceReady || !deviceReady) && <p className="button-hint">The local service must be running to continue.</p>}
           </form>
-          <div className="board-preview" aria-label="Braille board preview, currently simulated">
+          <div className="board-preview" role="group" aria-label="Braille board preview, currently simulated">
             <div className="board-preview-head"><span>THE CELL</span><span>SIMULATION · NO HARDWARE CONNECTED</span></div>
-            <div className="preview-cell" aria-label={currentCharacter ? `${currentCharacter}, Braille dots ${raisedDots.length ? raisedDots.join(", ") : "none"}` : "Braille cell waiting"}>
+            <div className="preview-cell" role="img" aria-label={currentCharacter ? `${currentCharacter === " " ? "Space" : `Letter ${currentCharacter}`}, Braille dots ${raisedDots.length ? raisedDots.join(", ") : "none"}` : "Braille cell waiting"}>
               {[1, 4, 2, 5, 3, 6].map((dot) => <span key={dot} className={raisedDots.includes(dot) ? "raised" : ""} aria-hidden="true" />)}
             </div>
             <div className="preview-progress">
               <strong>{currentCharacter === " " ? "Space" : currentCharacter ?? "Ready"}</strong>
-              <p role="status" aria-live="polite">{result?.message ?? "Enter text to begin a simulated practice."}</p>
+              <p>{result?.message ?? "Enter text to begin a simulated practice."}</p>
               {result && <span>{result.current_index} / {result.character_count}</span>}
             </div>
           </div>
