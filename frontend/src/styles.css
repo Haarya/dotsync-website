@@ -364,3 +364,7 @@ html.ds-reduce-motion *, html.ds-reduce-motion *::before, html.ds-reduce-motion 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+.word-stepper { margin-top: 20px; padding: 16px; border: 1px solid var(--line-light); background: var(--night); }
+.word-stepper p { color: var(--muted); line-height: 1.6; }
+.word-stepper strong { color: var(--paper); }
