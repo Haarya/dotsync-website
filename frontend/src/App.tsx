@@ -162,7 +162,7 @@ function App() {
         </nav>
         <div className="header-status" aria-label="Development preview status">
           <span className="status-dot" aria-hidden="true" />
-          <span>Preview · simulated board</span>
+          <span>{device?.mode === "esp32" ? (device.connected ? "ESP32 connected" : "ESP32 offline") : "Preview · simulated board"}</span>
         </div>
       </header>
 
