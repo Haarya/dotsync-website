@@ -58,7 +58,6 @@ export default function LearningStudio() {
   const [highContrast, setHighContrast] = useState(() => localStorage.getItem("dotsync-high-contrast") === "true");
   const [largeText, setLargeText] = useState(() => localStorage.getItem("dotsync-large-text") === "true");
   const [reduceMotion, setReduceMotion] = useState(() => localStorage.getItem("dotsync-reduce-motion") === "true");
-  const [deviceUrl, setDeviceUrl] = useState(() => localStorage.getItem("dotsync-esp32-url") || "http://192.168.4.1");
   const [deviceState, setDeviceState] = useState<"mock" | "checking" | "connected" | "error">("mock");
   const [deviceMessage, setDeviceMessage] = useState("Simulator mode is active. No physical board is being controlled.");
   const [listening, setListening] = useState(false);
@@ -179,47 +178,47 @@ export default function LearningStudio() {
   };
 
   const connectDevice = async () => {
-    const base = deviceUrl.trim().replace(/\/+$/, "");
-    if (!/^https?:\/\//i.test(base)) {
-      setDeviceState("error");
-      setDeviceMessage("Enter a full local device URL, such as http://192.168.4.1.");
-      return;
-    }
-    localStorage.setItem("dotsync-esp32-url", base);
     setDeviceState("checking");
-    setDeviceMessage("Checking the ESP32 status endpoint…");
+    setDeviceMessage("Checking the device through the local backend…");
     try {
-      const response = await fetch(`${base}/api/status`, { signal: AbortSignal.timeout(3500) });
-      if (!response.ok) throw new Error(`Device returned HTTP ${response.status}`);
-      const payload = await response.json().catch(() => ({}));
-      setDeviceState("connected");
-      setDeviceMessage(`ESP32 status endpoint responded successfully${payload.busy ? " (busy)" : ""}. Confirm firmware/CORS compatibility before using with a learner.`);
+      const response = await fetch("/api/v1/device/status", { signal: AbortSignal.timeout(4000) });
+      if (!response.ok) throw new Error("The local backend could not return device status.");
+      const payload = await response.json() as { mode?: string; connected?: boolean; message?: string };
+      if (payload.mode === "esp32" && payload.connected) {
+        setDeviceState("connected");
+        setDeviceMessage(payload.message || "The backend can reach the ESP32. Check the physical cell before learner use.");
+      } else if (payload.mode === "mock") {
+        setDeviceState("mock");
+        setDeviceMessage("The backend is in simulator mode. Set DOTSYNC_DEVICE_MODE=esp32 and DOTSYNC_DEVICE_URL in backend/.env, then restart the API.");
+      } else {
+        setDeviceState("error");
+        setDeviceMessage(payload.message || "The ESP32 is not reachable. Check backend configuration, power, and local Wi-Fi.");
+      }
     } catch {
       setDeviceState("error");
-      setDeviceMessage("Could not reach /api/status. Check the ESP32 Wi-Fi, URL, firmware, and browser CORS settings. Simulator remains available.");
+      setDeviceMessage("Could not read device status from the local backend. Start the FastAPI service and try again.");
     }
   };
 
   const sendLetterToDevice = async () => {
     if (deviceState !== "connected") {
-      setDeviceMessage("Connect to the ESP32 first, or switch back to simulator mode.");
+      setDeviceMessage("Check the ESP32 connection first, or continue with the simulator.");
       return;
     }
-    const base = deviceUrl.trim().replace(/\/+$/, "");
-    const body = new URLSearchParams({ letter });
     try {
-      const response = await fetch(`${base}/api/learn`, {
+      const response = await fetch("/api/v1/practice", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: letter }),
         signal: AbortSignal.timeout(5000),
       });
-      if (!response.ok) throw new Error(`Device returned HTTP ${response.status}`);
-      setDeviceMessage(`Sent letter ${letter} to the ESP32. Verify the physical cell before continuing.`);
+      const payload = await response.json().catch(() => ({})) as { message?: string; detail?: { message?: string } };
+      if (!response.ok) throw new Error(payload.message || payload.detail?.message || "The device command failed.");
+      setDeviceMessage(`Letter ${letter} queued through the backend. Verify the physical cell before continuing.`);
       setAnnounce(`Sent letter ${letter} to the Braille device.`);
-    } catch {
+    } catch (error) {
       setDeviceState("error");
-      setDeviceMessage("The ESP32 command failed. Check its form field contract and CORS configuration; simulator mode is still available.");
+      setDeviceMessage(error instanceof Error ? error.message : "The ESP32 command failed. Simulator remains available.");
     }
   };
 
@@ -345,14 +344,14 @@ export default function LearningStudio() {
         <section className="studio-card" aria-labelledby="device-title">
           <p className="eyebrow">HARDWARE CONNECTION</p><h2 id="device-title">Connect a local ESP32</h2>
           <p className="studio-muted">This prototype can use the simulator without hardware. To try the board, connect your computer to the same local Wi-Fi as the ESP32 and enter its base URL.</p>
-          <label className="studio-label" htmlFor="esp32-url">ESP32 base URL</label>
-          <div className="studio-word-row"><input id="esp32-url" type="url" value={deviceUrl} onChange={(event) => setDeviceUrl(event.target.value)} placeholder="http://192.168.4.1" /><button className="button button-primary" type="button" onClick={() => void connectDevice()} disabled={deviceState === "checking"}>{deviceState === "checking" ? "Checking…" : "Check connection"}</button></div>
+          <p className="studio-muted"><strong>Backend configuration:</strong> set <code>DOTSYNC_DEVICE_MODE=esp32</code> and <code>DOTSYNC_DEVICE_URL=http://192.168.4.1</code> in your local backend environment, using the actual address assigned to your board.</p>
+          <button className="button button-primary" type="button" onClick={() => void connectDevice()} disabled={deviceState === "checking"}>{deviceState === "checking" ? "Checking…" : "Check backend connection"}</button>
           <p className={`device-message device-${deviceState}`} role="status" aria-live="polite"><strong>{deviceState === "connected" ? "Connected" : deviceState === "checking" ? "Checking" : deviceState === "error" ? "Connection issue" : "Simulator mode"}</strong> — {deviceMessage}</p>
           <div className="studio-actions">
             <button className="button button-primary" type="button" onClick={() => void sendLetterToDevice()} disabled={deviceState !== "connected"}>Send {letter} to Braille cell</button>
             <button className="button studio-secondary" type="button" onClick={() => { setDeviceState("mock"); setDeviceMessage("Simulator mode is active. No physical board is being controlled."); }}>Use simulator instead</button>
           </div>
-          <p className="studio-muted">Hardware note: the current firmware contract uses GET /api/status and form-encoded POST /api/learn. If your firmware differs, update the endpoint or field name. A browser CORS block can prevent direct access; in that case use the backend adapter approach documented in the repository. Test on the bench before using with a learner.</p>
+          <p className="studio-muted">Hardware note: the backend adapter uses GET /api/status, form-encoded POST /api/learn with a letter field, and POST /api/pins/reset. Confirm these fields against your flashed firmware. Test movement and emergency stop on the bench before using with a learner.</p>
         </section>
       )}
     </section>
