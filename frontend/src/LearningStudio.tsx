@@ -191,7 +191,7 @@ export default function LearningStudio() {
         setDeviceMessage(payload.message || "The backend can reach the ESP32. Check the physical cell before learner use.");
       } else if (payload.mode === "mock") {
         setDeviceState("mock");
-        setDeviceMessage("The backend is in simulator mode. Set DOTSYNC_DEVICE_MODE=esp32 and DOTSYNC_DEVICE_URL in backend/.env, then restart the API.");
+        setDeviceMessage("The backend is in simulator mode. Export DOTSYNC_DEVICE_MODE=esp32 and DOTSYNC_DEVICE_URL in the terminal before starting the API.");
       } else {
         setDeviceState("error");
         setDeviceMessage(payload.message || "The ESP32 is not reachable. Check backend configuration, power, and local Wi-Fi.");
