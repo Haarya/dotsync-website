@@ -324,7 +324,7 @@ export default function LearningStudio() {
           </div>
           <h3>Achievement badges</h3>
           <div className="achievement-list">
-            {["Five letters", "Ten correct", "Alphabet explorer"].map((badge) => <span key={badge} className={`achievement ${progress.badges.includes(badge) ? "earned" : ""}`} aria-label={`${badge}: ${progress.badges.includes(badge) ? "earned" : "not yet earned"}`}>{progress.badges.includes(badge) ? "★" : "☆"} {badge}</span>)}
+            {["Five letters", "Ten correct", "Alphabet explorer", "Word finisher"].map((badge) => <span key={badge} className={`achievement ${progress.badges.includes(badge) ? "earned" : ""}`} aria-label={`${badge}: ${progress.badges.includes(badge) ? "earned" : "not yet earned"}`}>{progress.badges.includes(badge) ? "★" : "☆"} {badge}</span>)}
           </div>
           <p className="studio-muted">Progress stays in this browser on this device. It is not synced to an account or sent to a server.</p>
           <button className="button studio-secondary" type="button" onClick={() => { if (window.confirm("Reset all locally saved DotSync progress?")) { setProgress(emptyProgress); setFeedback("Local progress reset."); setAnnounce("Local progress reset."); } }}>Reset my progress</button>
