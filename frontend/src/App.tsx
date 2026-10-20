@@ -1,9 +1,10 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { api, DeviceStatus, HealthResponse, PracticeResponse, WordSession } from "./api";
 import BrailleParticleScene from "./BrailleParticleScene";
+import LearningStudio from "./LearningStudio";
 
 const MAX_TEXT_LENGTH = 40;
-type Page = "home" | "learn" | "guided" | "practice" | "quiz" | "about";
+type Page = "home" | "learn" | "guided" | "practice" | "quiz" | "about" | "studio";
 
 const pages: { id: Page; label: string }[] = [
   { id: "home", label: "Home" },
@@ -12,6 +13,7 @@ const pages: { id: Page; label: string }[] = [
   { id: "practice", label: "Practice" },
   { id: "quiz", label: "Word journey" },
   { id: "about", label: "Our approach" },
+  { id: "studio", label: "Learning studio" },
 ];
 
 const alphabet = [
@@ -187,6 +189,7 @@ function App() {
         )}
         {page === "quiz" && <WordJourneyPage />}
         {page === "about" && <ApproachPage />}
+        {page === "studio" && <LearningStudio />}
       </main>
 
       <footer className="site-footer">
