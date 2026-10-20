@@ -13,10 +13,10 @@
   --line-light: #594331;
   --paper: #fff3df;
   --muted: #d4c0a8;
-  --quiet: #a58d76;
+  --quiet: #c2ad96;
   --brass: #FBB931;
   --brass-deep: #F88F22;
-  --mint: #d7924e;
+  --mint: #edb574;
   --error: #ffb7a5;
   --success: #b8e5c2;
 }
@@ -26,7 +26,12 @@ html { min-width: 320px; background: var(--night); }
 body { min-width: 320px; min-height: 100vh; margin: 0; background: radial-gradient(ellipse at 50% -28%, #302016 0%, #211812 38%, var(--night) 78%); background-attachment: fixed; }
 button, textarea { font: inherit; }
 a { color: inherit; }
-button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid var(--brass); outline-offset: 4px; }
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--brass);
+  outline-offset: 4px;
+}
+[tabindex="-1"]:focus { outline: none; }
+main:focus { outline: none; }
 ::selection { color: var(--night); background: var(--brass); }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
@@ -152,7 +157,7 @@ h1, h2, h3 { color: var(--paper); }
 .practice-panel label { display: block; margin-bottom: 12px; color: var(--paper); font-family: Georgia, serif; font-size: 21px; }
 textarea { display: block; width: 100%; min-height: 128px; resize: vertical; padding: 15px 16px; border: 1px solid var(--line-light); border-radius: 2px; color: var(--paper); background: #130f0d; font-size: 18px; line-height: 1.6; }
 textarea::placeholder { color: #82928a; }
-textarea:focus { border-color: var(--brass); }
+textarea:focus-visible { border-color: var(--brass); }
 .input-meta { display: flex; justify-content: space-between; gap: 15px; margin-top: 9px; color: var(--quiet); font-size: 11px; line-height: 1.5; }
 .input-meta span:last-child { flex: 0 0 auto; font-variant-numeric: tabular-nums; }
 .submit-button { width: 100%; margin-top: 22px; }
@@ -285,5 +290,11 @@ textarea:focus { border-color: var(--brass); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+  html:focus-within { scroll-behavior: auto !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
