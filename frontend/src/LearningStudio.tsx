@@ -49,6 +49,8 @@ export default function LearningStudio() {
   const [mode, setMode] = useState<"explore" | "quiz" | "progress" | "accessibility" | "device">("explore");
   const [letter, setLetter] = useState("A");
   const [word, setWord] = useState("CAT");
+  const [wordPractice, setWordPractice] = useState("");
+  const [wordIndex, setWordIndex] = useState(0);
   const [selectedDots, setSelectedDots] = useState<number[]>([]);
   const [quizLetter, setQuizLetter] = useState("G");
   const [quizDots, setQuizDots] = useState<number[]>([]);
@@ -285,8 +287,9 @@ export default function LearningStudio() {
             <label className="studio-label" htmlFor="studio-word">Word (English A–Z, up to 8 letters)</label>
             <div className="studio-word-row">
               <input id="studio-word" value={word} maxLength={8} pattern="[A-Za-z]{2,8}" onChange={(event) => setWord(event.target.value.toUpperCase().replace(/[^A-Z]/g, ""))} />
-              <button className="button button-primary" type="button" onClick={() => { const normalized = word.trim().toUpperCase(); if (/^[A-Z]{2,8}$/.test(normalized)) { setLetter(normalized[0]); setFeedback(`Starting ${normalized}, one letter at a time. The single cell cannot display a whole word simultaneously.`); setAnnounce(`Word practice begins with ${normalized[0]}.`); } else setFeedback("Enter 2–8 English letters with no spaces."); }}>Start word</button>
+              <button className="button button-primary" type="button" onClick={() => { const normalized = word.trim().toUpperCase(); if (/^[A-Z]{2,8}$/.test(normalized)) { setWordPractice(normalized); setWordIndex(0); setLetter(normalized[0]); setSelectedDots([]); setFeedback(`Word practice started: letter 1 of ${normalized.length}.`); setAnnounce(`Word practice started with letter ${normalized[0]}.`); } else setFeedback("Enter 2–8 English letters with no spaces."); }}>Start word</button>
             </div>
+            {wordPractice && <div className="word-stepper" aria-live="polite"><p><strong>{wordPractice}</strong> · Letter {wordIndex + 1} of {wordPractice.length}: <strong>{wordPractice[wordIndex]}</strong></p><button className="button button-primary" type="button" onClick={() => { if (wordIndex < wordPractice.length - 1) { const next = wordIndex + 1; setWordIndex(next); setLetter(wordPractice[next]); setSelectedDots([]); setFeedback(`Letter ${next + 1} of ${wordPractice.length}.`); setAnnounce(`Next letter: ${wordPractice[next]}.`); } else { setFeedback("Word practice complete. Great work!"); setAnnounce("Word practice complete."); setProgress((previous) => ({ ...previous, badges: Array.from(new Set([...previous.badges, "Word finisher"])) })); } }}>{wordIndex < wordPractice.length - 1 ? "Next letter →" : "Finish word"}</button></div>}
             <p className="studio-muted">The current prototype has one six-dot cell, so word practice steps through letters rather than displaying a whole word at once.</p>
           </section>
         </div>
