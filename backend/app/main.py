@@ -1,9 +1,12 @@
+import os
+
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from .device.base import DeviceStatus, PracticeAction
 from .device.mock import DeviceBusyError, MockDeviceClient
+from .device.esp32 import DeviceConnectionError, ESP32DeviceClient
 from .lessons import WordSessionStore, WordSessionView
 from .schemas import HealthResponse, PracticeRequest, WordAnswerRequest, WordSessionRequest
 
@@ -12,7 +15,11 @@ app = FastAPI(
     version="0.1.0",
     description="Local Phase 1 API. Device operations currently use a safe simulator.",
 )
-device = MockDeviceClient()
+device_mode = os.getenv("DOTSYNC_DEVICE_MODE", "mock").strip().lower()
+if device_mode == "esp32":
+    device = ESP32DeviceClient(os.getenv("DOTSYNC_DEVICE_URL", "http://192.168.4.1"))
+else:
+    device = MockDeviceClient()
 word_sessions = WordSessionStore()
 
 
@@ -68,6 +75,11 @@ async def device_status() -> DeviceStatus:
 async def practice(request: PracticeRequest) -> PracticeAction:
     try:
         return await device.start_practice(request.text)
+    except DeviceConnectionError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"code": "DEVICE_OFFLINE", "message": str(error)},
+        ) from error
     except DeviceBusyError as error:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
