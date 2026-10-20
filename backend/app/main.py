@@ -13,7 +13,7 @@ from .schemas import HealthResponse, PracticeRequest, WordAnswerRequest, WordSes
 app = FastAPI(
     title="DotSync Local API",
     version="0.1.0",
-    description="Local Phase 1 API. Device operations currently use a safe simulator.",
+    description="Local Braille learning API with safe mock mode and optional ESP32 adapter.",
 )
 device_mode = os.getenv("DOTSYNC_DEVICE_MODE", "mock").strip().lower()
 if device_mode == "esp32":
