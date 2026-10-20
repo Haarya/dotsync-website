@@ -105,8 +105,14 @@ async def cancel_action(action_id: str) -> PracticeAction:
 
 @app.post("/api/v1/device/reset", response_model=DeviceStatus)
 async def reset_device() -> DeviceStatus:
-    await device.reset()
-    return await device.get_status()
+    try:
+        await device.reset()
+        return await device.get_status()
+    except DeviceConnectionError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"code": "DEVICE_OFFLINE", "message": str(error)},
+        ) from error
 
 
 @app.post("/api/v1/sessions", response_model=WordSessionView, status_code=status.HTTP_201_CREATED)
