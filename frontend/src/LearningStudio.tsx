@@ -261,6 +261,7 @@ export default function LearningStudio() {
             <p className="studio-hint">Raised dots: <strong>{activeEntry.dots.join(", ")}</strong></p>
             <button className="button button-primary" type="button" onClick={speakCurrent}>Listen to letter and dots</button>
             <button className="button studio-secondary" type="button" onClick={startVoiceAnswer} disabled={listening}>{listening ? "Listening…" : "Try voice input"}</button>
+            <p className="studio-muted">Voice input depends on browser support and may be processed by the browser's speech service. Use dot selection or keyboard input if you do not want to use voice recognition.</p>
           </section>
           <section className="studio-card" aria-labelledby="dot-builder-title">
             <p className="eyebrow">BUILD THE CELL</p>
