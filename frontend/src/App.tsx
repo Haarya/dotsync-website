@@ -205,9 +205,9 @@ function HomePage({ serviceReady, message }: { serviceReady: boolean; message: s
           </div>
         </div>
         <div className="hero-art-wrap">
-          <div className="hero-art-label"><span>01 / 06</span><span>Dots in motion</span></div>
+          <div className="hero-art-label"><span>01 / 06</span><span>The Tactile Eye</span></div>
           <BrailleParticleScene />
-          <p className="hero-art-caption">A little movement. A new way to read.</p>
+          <p className="hero-art-caption">Formed from points of light. Looking, learning, ready to read.</p>
         </div>
         <div className="hero-bottomline"><span>BUILT AROUND TOUCH AND SOUND</span><span>ENGLISH GRADE 1 · A—Z</span></div>
       </section>
